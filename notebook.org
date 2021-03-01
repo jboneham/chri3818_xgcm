@@ -1,0 +1,115 @@
+#+TITLE: Notebook
+
+#+BEGIN_SRC jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json
+
+print(b-1)
+
+#+END_SRC
+
+#+RESULTS:
+: 11
+
+#+BEGIN_SRC jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json
+
+dg = xr.open_dataset(expdir + "/grid.nc")
+print("loaded grid data")
+snap = (dg.merge(xr.open_dataset(expdir + "/diagstate.nc")
+                 .drop_vars(["diag_levels", "iter"])
+                 .rename_dims(Zmd000016="Z", Zld000016="Zl")
+                 .assign_coords({"Z" : dg.Z, "Zl" : dg.Zl, "Zu": dg.Zu, "Zp1": dg.Zp1}))
+        .pipe(lambda x, y: (print(y), x)[1], "Loaded diagstate")
+        .merge(xr.open_dataset(expdir + "/diags1lvl.nc")
+               .squeeze()
+               .drop_vars(["diag_levels", "iter"])))
+print("Loaded diags1lvl")
+snap = snap.assign_attrs(
+    grid=xg.Grid(snap,
+                 coords={"X": {"center": "X", "outer": "Xp1"},
+                         "Y": {"center": "Y", "outer": "Yp1"},
+                         "Z": {"center": "Z", "outer": "Zp1", "left": "Zl", "right": "Zu"}},
+                 periodic=None,
+                 default_shifts={"Z": {"center": "outer"}},
+                 fill_value=0)
+)
+print("Assigned grid")
+avg = (dg.merge(xr.open_dataset(expdir + "/diagstate_avg.nc")
+                 .drop_vars(["diag_levels", "iter"])
+                 .rename_dims(Zmd000016="Z", Zld000016="Zl")
+                 .assign_coords({"Z" : dg.Z, "Zl" : dg.Zl, "Zu": dg.Zu, "Zp1": dg.Zp1}))
+        .pipe(lambda x, y: (print(y), x)[1], "Loaded diagstate_avg")
+        .merge(xr.open_dataset(expdir + "/diags1lvl_avg.nc")
+               .squeeze()
+               .drop_vars(["diag_levels", "iter"])))
+print("Loaded diags1lvl_avg")
+avg = avg.assign_attrs(
+    grid=xg.Grid(avg,
+                 coords={"X": {"center": "X", "outer": "Xp1"},
+                         "Y": {"center": "Y", "outer": "Yp1"},
+                         "Z": {"center": "Z", "outer": "Zp1", "left": "Zl", "right": "Zu"}},
+                 periodic=None,
+                 default_shifts={"Z": {"center": "outer"}},
+                 fill_value=0)
+)
+print("Assigned grid")
+#+END_SRC
+
+
+#+begin_src jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json
+expdir15 = (
+    "/network/group/aopp/oceans/DPM006_BONEHAM_NASPG/experiments/"
+    "2101191432_slopewalls_forced/run/210126_ctrl/STITCHED_OUTPUT"
+)
+expdir30 = (
+    "/network/group/aopp/oceans/DPM006_BONEHAM_NASPG/experiments/"
+    "2102191041_higher_vres/run/210219_spinup/STITCHED_OUTPUT"
+)
+#+end_src
+
+#+RESULTS:
+
+#+BEGIN_SRC jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
+diag16 = get_diags(expdir15, "diagstate", "diags1lvl", levels=16)
+diag30 = get_diags(expdir30, "diagstate", "diags1lvl", levels=30)
+#+end_src
+
+#+RESULTS:
+
+#+BEGIN_SRC jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
+diag16.THETA.isel(T=-1, X=45).where(lambda x: x!= 0.).plot.contourf(levels=31)
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+: <matplotlib.contour.QuadContourSet at 0x7ff7a935bf90>
+[[file:./.ob-jupyter/557b337a67141af107f19686f63ad72e80d98560.png]]
+:END:
+
+#+BEGIN_SRC jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
+diag30.THETA.isel(T=-1, X=45).where(lambda x: x!= 0.).plot.contourf(levels=31)
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+: <matplotlib.contour.QuadContourSet at 0x7ff7ba092650>
+[[file:./.ob-jupyter/489333a9fac832ea5ec073d6a52910a712ae9185.png]]
+:END:
+
+#+BEGIN_SRC jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
+diag30.VVEL.isel(T=-1, Z=0).plot.contourf(levels=51)
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+: <matplotlib.contour.QuadContourSet at 0x7ff798147ed0>
+[[file:./.ob-jupyter/7d77d16c28646da90ac442db2033a77067a9dbec.png]]
+:END:
+
+#+begin_src jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
+diag16.VVEL.isel(T=-1, Z=0).plot.contourf(levels=51)
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+: <matplotlib.contour.QuadContourSet at 0x7ff798009e10>
+[[file:./.ob-jupyter/f0e09f6e5a14f13b69f2f4b9b346f45c5fda23e2.png]]
+:END:
