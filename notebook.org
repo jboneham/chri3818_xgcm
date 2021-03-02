@@ -2,12 +2,12 @@
 
 #+BEGIN_SRC jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json
 
-print(b-1)
+print(np.random.randint(9999))
 
 #+END_SRC
 
 #+RESULTS:
-: 11
+: 562
 
 #+BEGIN_SRC jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json
 
@@ -113,3 +113,39 @@ diag16.VVEL.isel(T=-1, Z=0).plot.contourf(levels=51)
 : <matplotlib.contour.QuadContourSet at 0x7ff798009e10>
 [[file:./.ob-jupyter/f0e09f6e5a14f13b69f2f4b9b346f45c5fda23e2.png]]
 :END:
+
+#+begin_src jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
+dg = open_dataset(expdir + "/grid.nc")
+# ds1 = open_dataset(expdir + "/diags1lvl.nc")
+# ds = open_dataset(expdir + "/diagstate.nc")
+#+end_src
+
+#+RESULTS:
+
+#+begin_src jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
+[i for i in ds.dims if i[0] == "Z"], [i for i in ds1.dims if i[0] == "Z"]
+#+end_src
+
+#+RESULTS:
+: (['Zld000030', 'Zmd000030'], ['Zd000001', 'Zmd000001'])
+
+#+begin_src jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
+zfrom = [i for i in ds.dims if i[0] == "Z"]
+zto = [i[0] if i[1] == "m" else i[:2] for i in zfrom]
+{z: zto[i] for i, z in enumerate(zfrom)}
+#+end_src
+
+#+RESULTS:
+: {'Zld000030': 'Zl', 'Zmd000030': 'Z'}
+
+#+begin_src jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
+psi_ext = get_psi_ext(ds)
+psi_bt = get_psi_bt(ds)
+psi_moc = get_psi_moc(ds)
+#+end_src
+
+#+RESULTS:
+
+#+begin_src jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
+
+#+end_src
