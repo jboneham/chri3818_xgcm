@@ -7,54 +7,14 @@ print(np.random.randint(9999))
 #+END_SRC
 
 #+RESULTS:
-: 562
-
-#+BEGIN_SRC jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json
-
-dg = xr.open_dataset(expdir + "/grid.nc")
-print("loaded grid data")
-snap = (dg.merge(xr.open_dataset(expdir + "/diagstate.nc")
-                 .drop_vars(["diag_levels", "iter"])
-                 .rename_dims(Zmd000016="Z", Zld000016="Zl")
-                 .assign_coords({"Z" : dg.Z, "Zl" : dg.Zl, "Zu": dg.Zu, "Zp1": dg.Zp1}))
-        .pipe(lambda x, y: (print(y), x)[1], "Loaded diagstate")
-        .merge(xr.open_dataset(expdir + "/diags1lvl.nc")
-               .squeeze()
-               .drop_vars(["diag_levels", "iter"])))
-print("Loaded diags1lvl")
-snap = snap.assign_attrs(
-    grid=xg.Grid(snap,
-                 coords={"X": {"center": "X", "outer": "Xp1"},
-                         "Y": {"center": "Y", "outer": "Yp1"},
-                         "Z": {"center": "Z", "outer": "Zp1", "left": "Zl", "right": "Zu"}},
-                 periodic=None,
-                 default_shifts={"Z": {"center": "outer"}},
-                 fill_value=0)
-)
-print("Assigned grid")
-avg = (dg.merge(xr.open_dataset(expdir + "/diagstate_avg.nc")
-                 .drop_vars(["diag_levels", "iter"])
-                 .rename_dims(Zmd000016="Z", Zld000016="Zl")
-                 .assign_coords({"Z" : dg.Z, "Zl" : dg.Zl, "Zu": dg.Zu, "Zp1": dg.Zp1}))
-        .pipe(lambda x, y: (print(y), x)[1], "Loaded diagstate_avg")
-        .merge(xr.open_dataset(expdir + "/diags1lvl_avg.nc")
-               .squeeze()
-               .drop_vars(["diag_levels", "iter"])))
-print("Loaded diags1lvl_avg")
-avg = avg.assign_attrs(
-    grid=xg.Grid(avg,
-                 coords={"X": {"center": "X", "outer": "Xp1"},
-                         "Y": {"center": "Y", "outer": "Yp1"},
-                         "Z": {"center": "Z", "outer": "Zp1", "left": "Zl", "right": "Zu"}},
-                 periodic=None,
-                 default_shifts={"Z": {"center": "outer"}},
-                 fill_value=0)
-)
-print("Assigned grid")
-#+END_SRC
+: 555
 
 
 #+begin_src jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json
+expdirvert = (
+    "/network/group/aopp/oceans/DPM006_BONEHAM_NASPG/experiments/"
+    "2008201654_ToS_01/run/201012_slope_walls/slp000/STITCHED_OUTPUT"
+)
 expdir15 = (
     "/network/group/aopp/oceans/DPM006_BONEHAM_NASPG/experiments/"
     "2101191432_slopewalls_forced/run/210126_ctrl/STITCHED_OUTPUT"
@@ -68,84 +28,568 @@ expdir30 = (
 #+RESULTS:
 
 #+BEGIN_SRC jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
-diag16 = get_diags(expdir15, "diagstate", "diags1lvl", levels=16)
-diag30 = get_diags(expdir30, "diagstate", "diags1lvl", levels=30)
+import mds
 #+end_src
 
 #+RESULTS:
 
 #+BEGIN_SRC jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
-diag16.THETA.isel(T=-1, X=45).where(lambda x: x!= 0.).plot.contourf(levels=31)
+# expdir15[:-15] + "PHrefC"
+pRef = mds.rdmds(expdir15[:-15] + "PHrefC")
+rhoRef = mds.rdmds(expdir15[:-15] + "RhoRef")
 #+end_src
 
 #+RESULTS:
-:RESULTS:
-: <matplotlib.contour.QuadContourSet at 0x7ff7a935bf90>
-[[file:./.ob-jupyter/557b337a67141af107f19686f63ad72e80d98560.png]]
-:END:
 
 #+BEGIN_SRC jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
-diag30.THETA.isel(T=-1, X=45).where(lambda x: x!= 0.).plot.contourf(levels=31)
+diagvert = create_dataset(expdirvert, "diagstate")
+diag16 = create_dataset(expdir15, "diagstate", "diags1lvl")
+# diag30 = get_diags(expdir30, "diagstate", "diags1lvl", levels=30)
 #+end_src
 
 #+RESULTS:
-:RESULTS:
-: <matplotlib.contour.QuadContourSet at 0x7ff7ba092650>
-[[file:./.ob-jupyter/489333a9fac832ea5ec073d6a52910a712ae9185.png]]
-:END:
 
 #+BEGIN_SRC jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
-diag30.VVEL.isel(T=-1, Z=0).plot.contourf(levels=51)
+psi_ext16 = get_psi_ext(diag16)
+psi_bt16 = get_psi_bt(diag16)
+psi_moc16 = get_psi_moc(diag16)
+psi_ext30 = get_psi_ext(diag30)
+psi_bt30 = get_psi_bt(diag30)
+psi_moc30 = get_psi_moc(diag30)
+#+end_src
+
+#+RESULTS:
+
+#+begin_src jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
+fig1, ax1 = plt.subplots(1, 2, sharey=True, figsize=(13,8))
+qcs1_16 = psi_bt16[0].plot.contourf(levels=31, ax=ax1[0], vmax=38)
+qcs1_30 = psi_bt30[-1].plot.contourf(levels=31, ax=ax1[1], vmax=38)
+#+end_src
+
+#+RESULTS:
+[[file:./.ob-jupyter/a4d3a1e89f55e9f41968ad67fa590e6d091d106b.png]]
+
+#+begin_src jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
+fig2, ax2 = plt.subplots(2, 1, sharex=True, figsize=(13,8))
+qcs2_16 = psi_moc16[0].plot.contourf(levels=31, ax=ax2[0], vmax=18)
+qcs2_30 = psi_moc30[-1].plot.contourf(levels=31, ax=ax2[1], vmax=18)
+ax2[0].set_xlabel("")
+ax2[1].set_title("")
 #+end_src
 
 #+RESULTS:
 :RESULTS:
-: <matplotlib.contour.QuadContourSet at 0x7ff798147ed0>
-[[file:./.ob-jupyter/7d77d16c28646da90ac442db2033a77067a9dbec.png]]
+: Text(0.5, 1.0, '')
+[[file:./.ob-jupyter/e0021c2d902169c962c5413deceb03457e1cfc6c.png]]
 :END:
 
 #+begin_src jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
-diag16.VVEL.isel(T=-1, Z=0).plot.contourf(levels=51)
+fig3, ax3 = plt.subplots(2, 1, sharex=True, figsize=(13,8))
+qcs3_16 = psi_ext16[0].plot.contourf(levels=31, ax=ax3[0], vmax=10)
+qcs3_30 = psi_ext30[-1].plot.contourf(levels=31, ax=ax3[1], vmax=10)
+ax3[0].set_xlabel("")
+ax3[1].set_title("")
 #+end_src
 
 #+RESULTS:
 :RESULTS:
-: <matplotlib.contour.QuadContourSet at 0x7ff798009e10>
-[[file:./.ob-jupyter/f0e09f6e5a14f13b69f2f4b9b346f45c5fda23e2.png]]
+: Text(0.5, 1.0, '')
+[[file:./.ob-jupyter/82311d46ac7e8d08f8fe2fadfe08946d3ae94d8b.png]]
 :END:
 
 #+begin_src jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
-dg = open_dataset(expdir + "/grid.nc")
-# ds1 = open_dataset(expdir + "/diags1lvl.nc")
-# ds = open_dataset(expdir + "/diagstate.nc")
+fig4, ax4 = plt.subplots(1, 2, sharey=True, figsize=(13,8))
+qcs4_16 = diag16.MXLDEPTH.where(diag16.HFacC.isel(Z=0))[0].plot.contourf(levels=31, ax=ax4[0], vmax=1500)
+qcs4_30 = diag30.MXLDEPTH.where(diag30.HFacC.isel(Z=0))[-1].plot.contourf(levels=31, ax=ax4[1], vmax=1500)
+#+end_src
+
+#+RESULTS:
+[[file:./.ob-jupyter/efe486c8b304e1e796125735bb905c939185b0ba.png]]
+
+#+begin_src jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
+fig5, ax5 = plt.subplots(1, 2, sharey=True, figsize=(13,8))
+qcs5_16 = diag16.THETA.isel(T=-1, Z=0).where(diag16.HFacC.isel(Z=0)).plot.contourf(levels=31, ax=ax5[0], vmax=20)
+qcs5_30 = diag30.THETA.isel(T=-1, Z=0).where(diag30.HFacC.isel(Z=0)).plot.contourf(levels=31, ax=ax5[1], vmax=20)
+#+end_src
+
+#+RESULTS:
+[[file:./.ob-jupyter/e2bd20455fb460c6c492f66f4e7d21c7abfef4f8.png]]
+
+#+begin_src jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
+fig6, ax6 = plt.subplots(1, 2, sharey=True, figsize=(13,8))
+qcs6_16 = diag16.surForcT.isel(T=-1).where(diag16.HFacC.isel(Z=0)).plot.contourf(levels=31, ax=ax6[0], vmax=190)
+qcs6_30 = diag30.surForcT.isel(T=-1).where(diag30.HFacC.isel(Z=0)).plot.contourf(levels=31, ax=ax6[1], vmax=190)
+#+end_src
+
+#+RESULTS:
+[[file:./.ob-jupyter/021d47fb10c35206914f51e5bbd0246f04545d66.png]]
+
+#+begin_src jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
+
+# sl = np.s_[-1, :, 60, :]
+# i_y = 60
+i_y = 0
+H_mask = ds.HFacC[:, i_y, :]
+O_mask = ds.HFacC[:,i_y,:].where(lambda x: x==0., 1, 0)
+m = -(ds.HFacC[:, i_y, :] * ds.drF).cumsum(dim='Z')
+zF = ds.drF.cumsum(dim='Z').data
+zC = m.Z.data
+m = m*O_mask
+p = ds.PHIHYD[-1, :, i_y, :]
+d = ds.Depth[i_y, :].data.tolist()
 #+end_src
 
 #+RESULTS:
 
 #+begin_src jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
-[i for i in ds.dims if i[0] == "Z"], [i for i in ds1.dims if i[0] == "Z"]
+m = -(ds.HFacC * ds.drF).cumsum(dim='Z')
+O_mask = ds.HFacC.where(lambda x: x==0., 1, 0)
+m = m*O_mask
+p = ds.PHIHYD[-1, :, :, :]
+d_array = None
+for i_y in range(100):
+    Y = ds.YC.data[i_y, i_x]
+    if (m.data[:, i_y, :i_xmax] == 0).all():
+        plist = [0, 0]
+        zlist = [0, -4000]
+    else:
+        i_z = 0
+        i_x = 0
+        i_xmax = 30
+        zlist = [0.001]
+        plist = [0]
+        zmax = m[:, i_y, :i_xmax].min()
+        while i_z < 30:
+            if (m.data[i_z, i_y, :i_xmax] == 0).all():
+                break
+            else:
+                pass
+            while m[i_z, i_y, i_x] == 0.:
+                i_x += 1
+            if m[i_z, i_y, i_x] == m[i_z, i_y, i_xmax]:
+                plist += [p.data[i_z, i_y, i_x], p.data[i_z, i_y, i_x]]
+                zlist += [zlist[-1] - 0.001, m.data[i_z, i_y, i_x]]
+            else:
+                while m[i_z, i_y, i_x] > m[i_z, i_y, i_xmax]:
+                    plist += [p.data[i_z, i_y, i_x], p.data[i_z, i_y, i_x]]
+                    zlist += [zlist[-1] - 0.001, m.data[i_z, i_y, i_x]]
+                    i_x += 1
+            i_z += 1
+        i_x += 1
+        i_z -= 1
+        plist += [p.data[i_z, i_y, i_x], p.data[i_z, i_y, i_x]]
+        zlist += [zlist[-1] - 0.001, m.data[i_z, i_y, i_x]]
+        plist = plist[1:]
+        zlist = zlist[1:]
+    da = DataArray(np.array(plist)[:, np.newaxis], coords=[zlist, [Y]], dims=["Z", "Y"])
+    if d_array is None:
+        d_array = da
+    else:
+        d_array = d_array.combine_first(da)
+d_array = d_array.interpolate_na(dim="Z")
 #+end_src
 
 #+RESULTS:
-: (['Zld000030', 'Zmd000030'], ['Zd000001', 'Zmd000001'])
 
 #+begin_src jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
-zfrom = [i for i in ds.dims if i[0] == "Z"]
-zto = [i[0] if i[1] == "m" else i[:2] for i in zfrom]
-{z: zto[i] for i, z in enumerate(zfrom)}
+m = -(ds.HFacC * ds.drF).cumsum(dim='Z')
+O_mask = ds.HFacC.where(lambda x: x==0., 1, 0)
+m = m*O_mask
+m = m.data
 #+end_src
 
 #+RESULTS:
-: {'Zld000030': 'Zl', 'Zmd000030': 'Z'}
 
 #+begin_src jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
-psi_ext = get_psi_ext(ds)
-psi_bt = get_psi_bt(ds)
+arr = np.zeros((400, 160))
+#+end_src
+
+#+RESULTS:
+
+#+begin_src jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
+depths = np.linspace(0, -4000, 400)
+#+end_src
+
+#+RESULTS:
+
+#+begin_src jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
+i_y = 0
+i_xmax = 45
+for i_y in range(160):
+    i_x = 0
+    i_z = 0
+    k = 0
+    while m[i_z, i_y, i_x] == 0.:
+        i_x += 1
+        if i_x >= i_xmax:
+            arr[k:, i_y] = 0.
+            k = -1
+            break
+        else:
+            pass
+    while k < 400 and i_x < i_xmax and i_z < 30:
+        while depths[k] > m[i_z, i_y, i_x]:
+            arr[k, i_y] = p[i_z, i_y, i_x]
+            k += 1
+        if ds.HFacC[i_z, i_y, i_x] == 1.:
+            i_z += 1
+        else:
+            i_x += 1
+    arr[k:,i_y] = 0.
+#+end_src
+
+#+RESULTS:
+
+#+begin_src jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
+ds = diag16
+p = ds.PHIHYD.isel(T=-1)
+rc = ds.RC
+rf = ds.RF
+frac = ds.HFacC
+yc = ds.YC
+yf = ds.YG
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+# [goto error]
+#+begin_example
+---------------------------------------------------------------------------
+AttributeError                            Traceback (most recent call last)
+<ipython-input-773-1e30375b910c> in <module>()
+      5 frac = ds.HFacC
+      6 yc = ds.YC
+----> 7 yf = ds.YF
+
+/network/group/aopp/oceans/DPM006_BONEHAM_NASPG/anaconda3/envs/py38_00/lib/python3.7/site-packages/xarray/core/common.py in __getattr__(self, name)
+    227                     return source[name]
+    228         raise AttributeError(
+--> 229             "{!r} object has no attribute {!r}".format(type(self).__name__, name)
+    230         )
+    231
+
+AttributeError: 'Dataset' object has no attribute 'YF'
+#+end_example
+:END:
+
+#+begin_src jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
+bound_east(frac.data, 20, 14)
+#+end_src
+
+#+RESULTS:
+: [((14, 20, 0), 0.0),
+:  ((14, 20, 75), 0.7574227561169673),
+:  ((14, 20, 74), 0.17442635149780839),
+:  ((14, 20, 73), 0.06815089238522432)]
+
+#+begin_src jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
+p.data[0,0,:].shape[0]
+#+end_src
+
+#+RESULTS:
+: 80
+
+#+begin_src jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
+peast = bound_east2(frac.data, p.data)
+pwest = bound_west2(frac.data, p.data)
+Teast = bound_east2(frac.data, ds.THETA.isel(T=-1).data)
+Twest = bound_west2(frac.data, ds.THETA.isel(T=-1).data)
+#+end_src
+
+#+RESULTS:
+
+#+begin_src jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
+plt.contourf(yc[21:110,0], rc[:9], Twest[:9, 21:110], levels=31)
+plt.colorbar()
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+: <matplotlib.colorbar.Colorbar at 0x7ff6f6b44bd0>
+[[file:./.ob-jupyter/bd268fedda9ff73aa6794cf094f90fde47b68710.png]]
+:END:
+
+#+begin_src jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
+plt.contourf(yc[21:110,0], rc[:9], Twest1[:9, 21:110], levels=31)
+plt.colorbar()
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+: <matplotlib.colorbar.Colorbar at 0x7ff6f69fcc10>
+[[file:./.ob-jupyter/bd268fedda9ff73aa6794cf094f90fde47b68710.png]]
+:END:
+
+#+begin_src jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
+plt.contourf(yc[21:110,0], rc[:9], ds.THETA.isel(T=-1)[:9, 21:110,10], levels=31)
+plt.colorbar()
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+: <matplotlib.colorbar.Colorbar at 0x7ff6f6c7d490>
+[[file:./.ob-jupyter/7f881c2b898659f7a4cae36ac161f1f6dab2df78.png]]
+:END:
+
+#+begin_src jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
+# Twest1 = get_boundary(frac, ds.THETA, 'W')
+Ueast = get_boundary(ds.HFacW, ds.UVEL.isel(T=-1), 'E')
+Veast = get_boundary(ds.HFacS, ds.VVEL.isel(T=-1), 'E')
+Uwest = get_boundary(ds.HFacW, ds.UVEL.isel(T=-1), 'W')
+Vwest = get_boundary(ds.HFacS, ds.VVEL.isel(T=-1), 'W')
+#+end_src
+
+#+RESULTS:
+
+#+begin_src jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
+plt.contourf(yc[21:110,0], rc[:9], Ueast[:9, 21:110], levels=31)
+plt.colorbar()
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+: <matplotlib.colorbar.Colorbar at 0x7ff72139f850>
+[[file:./.ob-jupyter/e0aafe7c91bbec077c00a716bcaff51d3383bdee.png]]
+:END:
+
+#+begin_src jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
+plt.contourf(ds.YG.data[21:110,0], rc[:9], Veast[:9, 21:110], levels=31)
+plt.colorbar()
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+: <matplotlib.colorbar.Colorbar at 0x7ff6f7380150>
+[[file:./.ob-jupyter/5ba1b158f1d64a3d50a5cd1e79e6aa2b4b2f6122.png]]
+:END:
+
+#+begin_src jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
+Tvertwest = get_boundary(diagvert.HFacC, diagvert.THETA.isel(T=-1), 'W')
+Tverteast = get_boundary(diagvert.HFacC, diagvert.THETA.isel(T=-1), 'E')
+#+end_src
+
+#+RESULTS:
+
+#+begin_src jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
+plt.contourf(yc[21:110,0], rc[:9], (diagvert.THETA.isel(T=-1, X=-2) - Tverteast)[:9, 21:110], levels=31)
+plt.colorbar()
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+: <matplotlib.colorbar.Colorbar at 0x7ff6e59d2c50>
+[[file:./.ob-jupyter/5b25e8f4b35eb2e0349101bf3120827fd8ab0db5.png]]
+:END:
+
+#+begin_src jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
+zlev = 9
+ylim = 76
+m1 = 0.03
+lvls = np.linspace(-0.03, 0.03, 21)
+lvls = 31
+plt.contour(yc[1:ylim,0], rc[:zlev], Tverteast[:zlev, 1:ylim], levels=20, colors='k')
+qcs = plt.contourf(yc[1:ylim,0], rc[:zlev], diagvert.WVEL.isel(T=-1, X=-2)[:zlev, 1:ylim], levels=lvls, cmap="RdBu_r", extend='both')
+plt.colorbar(qcs)
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+: <matplotlib.colorbar.Colorbar at 0x7ff5bfda5390>
+[[file:./.ob-jupyter/50340b6d3596c59f16fb5e13367203033dcbe706.png]]
+:END:
+
+#+begin_src jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
+zlev = 9
+ylim = 76
+m1 = 0.03
+lvls = np.linspace(-0.03, 0.03, 21)
+plt.contour(yc[1:ylim,0], rc[:zlev], Tverteast[:zlev, 1:ylim], levels=20, colors='k')
+qcs = plt.contourf(yc[1:ylim,0], rc[:zlev], diagvert.UVEL.isel(T=-1, Xp1=-3)[:zlev, 1:ylim], levels=lvls, cmap="RdBu_r", extend='both')
+plt.colorbar(qcs)
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+: [<matplotlib.lines.Line2D at 0x7ff8012da5d0>]
+[[file:./.ob-jupyter/32a64436de94d5d6c2ac9d1bcfc00f11bc4e66d9.png]]
+:END:
+
+#+begin_src jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
+zlev = 9
+plt.contour(yc[1:110,0], rc[:zlev], Tvertwest[:zlev, 1:110], levels=20, colors='k')
+plt.contourf(yf[1:110,0], rc[:zlev], diagvert.VVEL.isel(T=-1, X=1)[:zlev, 1:110], levels=31)
+plt.colorbar()
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+: <matplotlib.colorbar.Colorbar at 0x7ff7c30c5b90>
+[[file:./.ob-jupyter/33569516ba70e8d8ac91202c3c83f2c00c3a4a74.png]]
+:END:
+
+#+begin_src jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
+plt.contourf(yc[21:110,0], rc[:9], Tverteast[:9, 21:110], levels=31)
+plt.colorbar()
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+: <matplotlib.colorbar.Colorbar at 0x7ff6e5915390>
+[[file:./.ob-jupyter/d03617a2b7da99943b6811860323545ed47f817d.png]]
+:END:
+
+#+begin_src jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
+ds = create_dataset(expdir30, "diagstate_avg", "diags1lvl_avg")
+#+end_src
+
+#+RESULTS:
+
+#+begin_src jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
+[(i, ds[i].dims) for i in ds.variables]
+#+end_src
+
+#+RESULTS:
+#+begin_example
+ ('R_low', ('Y', 'X')),
+ ('Ro_surf', ('Y', 'X')),
+ ('Depth', ('Y', 'X')),
+ ('HFacC', ('Z', 'Y', 'X')),
+ ('HFacW', ('Z', 'Y', 'Xp1')),
+ ('HFacS', ('Z', 'Yp1', 'X')),
+ ('THETA', ('T', 'Z', 'Y', 'X')),
+ ('UVEL', ('T', 'Z', 'Y', 'Xp1')),
+ ('VVEL', ('T', 'Z', 'Yp1', 'X')),
+ ('WVEL', ('T', 'Zl', 'Y', 'X')),
+ ('momVort3', ('T', 'Z', 'Yp1', 'Xp1')),
+ ('PHIHYD', ('T', 'Z', 'Y', 'X')),
+ ('RHOAnoma', ('T', 'Z', 'Y', 'X')),
+ ('DRHODR', ('T', 'Zl', 'Y', 'X')),
+ ('SALT', ('T', 'Z', 'Y', 'X')),
+ ('gT_Forc', ('T', 'Z', 'Y', 'X')),
+ ('oceTAUX', ('T', 'Y', 'Xp1')),
+ ('TRELAX', ('T', 'Y', 'X')),
+ ('MXLDEPTH', ('T', 'Y', 'X')),
+ ('ETAN', ('T', 'Y', 'X')),
+ ('PHIBOT', ('T', 'Y', 'X')),
+ ('surForcT', ('T', 'Y', 'X'))]
+#+end_example
+
+#+begin_src jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
+ds.grid.diff(ds.oceTAUX, "Y", boundary='fill').dims
+#+end_src
+
+#+RESULTS:
+: ('T', 'Yp1', 'Xp1')
+
+#+begin_src jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
+tau_curl = get_wind_curl(ds)
+#+end_src
+
+#+RESULTS:
+
+#+begin_src jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
+ds.oceTAUX.dims, ds.dxC.dims
+#+end_src
+
+#+RESULTS:
+: (('T', 'Y', 'Xp1'), ('Y', 'Xp1'))
+
+#+begin_src jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
+((ds.dxC*ds.oceTAUX.isel(T=-1).where(ds.HFacW.isel(Z=0), 0.)).sum(dim="Xp1")/(ds.dxC.where(ds.HFacW.isel(Z=0), 0.)).sum(dim="Xp1")).max()
+#+end_src
+
+#+RESULTS:
+: <xarray.DataArray ()>
+: array(0.0999972)
+: Coordinates:
+:     T        float64 1.577e+09
+:     Z        float64 -13.0
+
+#+begin_src jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
+ds.fCori.isel(X=0).squeeze().dims
+#+end_src
+
+#+RESULTS:
+: ('Y',)
+
+#+begin_src jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
+# (DataArray(data=get_ekman_cell_fracs(ds, 100), dims="Z") * ds.HFacS).isel(Z=14, X=10, Yp1=10)
+ekfr = DataArray(data=get_ekman_cell_fracs(ds, 500), dims="Z", coords={"Z": ds.Z})
+#+end_src
+
+#+RESULTS:
+
+#+begin_src jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
+ekfr1 = ds.HFacS.where(lambda x: x < ekfr, ekfr)
+#+end_src
+
+#+RESULTS:
+
+#+begin_src jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
+(ds.HFacS.isel(X=5, Yp1=85) - ekfr1.isel(X=2, Yp1=85))[:].plot(y="Z")
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+: [<matplotlib.lines.Line2D at 0x7ff4a5cf6a50>]
+[[file:./.ob-jupyter/381479207e722f04c66b516cd999a5f0cbbf476d.png]]
+:END:
+
+#+begin_src jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
+vek = get_v_ekman(ds)
+#+end_src
+
+#+RESULTS:
+
+#+begin_src jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
+# [i.dims for i in [ve,vd,he,hd]]
+vek.dims, ds.HFacS.dims, ds.HFacW.dims, ds.dxC.dims
+#+end_src
+
+#+RESULTS:
+: (('T', 'Z', 'Y', 'Xp1'), ('Z', 'Yp1', 'X'), ('Z', 'Y', 'Xp1'), ('Y', 'Xp1'))
+
+#+begin_src jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
+Hek = he + hd
+Hek.dims
+fig, ax = plt.subplots(1,2,figsize=(10,5))
+plt.sca(ax[0])
+(ds.HFacW - Hek).isel(Y=109).plot()
+plt.sca(ax[1])
+ds.HFacW.isel(Y=109).plot()
+#+end_src
+
+#+RESULTS:
+:RESULTS:
+: <matplotlib.collections.QuadMesh at 0x7ff41fb31b50>
+[[file:./.ob-jupyter/c721a99321336cfad3019a286ac7d5498b584a13.png]]
+:END:
+
+
+#+begin_src jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
+psi_ek = get_psi_ekman(ds)
 psi_moc = get_psi_moc(ds)
+psi_ext = get_psi_ext(ds)
+psi_g = psi_moc - psi_ek - psi_ext
 #+end_src
 
 #+RESULTS:
 
 #+begin_src jupyter-python :session /sshx:atmlxint5:/home/boneham/.local/share/jupyter/runtime/kernel-7ad3186a-3e4e-49fa-b9fd-5f8bafb36f4d.json :results scalar
-
+fig, ax = plt.subplots(2,2,figsize=(10,10))
+ax = ax.flatten()
+plt.sca(ax[0])
+psi_moc.isel(T=-1).plot.contourf(levels=31)
+plt.sca(ax[1])
+psi_ek.isel(T=-1).plot.contourf(levels=31)
+plt.sca(ax[2])
+psi_ext.isel(T=-1).plot.contourf(levels=31)
+plt.sca(ax[3])
+psi_g.isel(T=-1).plot.contourf(levels=31)
 #+end_src
+
+#+RESULTS:
+:RESULTS:
+: <matplotlib.contour.QuadContourSet at 0x7ff6ccee2f90>
+[[file:./.ob-jupyter/22a2112ef24bef7e20a74d7264b7f6a6e3ce0ddd.png]]
+:END:
